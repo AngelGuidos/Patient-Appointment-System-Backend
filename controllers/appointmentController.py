@@ -36,12 +36,19 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
     if serviceCheck is None:
         raise HTTPException(status_code=400, detail="Service not found")
 
+    # Check if the slot is available
+    if appointment.Modality not in ["Presential", "Virtual"]:
+        raise HTTPException(status_code=400, detail="Modality must be 'Presential' or 'Virtual'")
+    
+    print(f"[BACKEND] Creando cita con modalidad: {appointment.Modality}")
+
     newAppointment = Appointment(
         Problem=appointment.Problem,
         Date=appointment.Date,
         PatientId=appointment.PatientId,
         ServiceId=appointment.ServiceId,
         SlotId=appointment.SlotId,
+        Modality=appointment.Modality, 
     )
     db.add(newAppointment)
     await db.commit()
