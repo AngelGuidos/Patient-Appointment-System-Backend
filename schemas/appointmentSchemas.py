@@ -9,6 +9,8 @@ class AppointmentRequestModel(BaseModel):
     ServiceId: int
     SlotId: int
 
+    Modality: str
+
     class Config:
         orm_mode = True
 
