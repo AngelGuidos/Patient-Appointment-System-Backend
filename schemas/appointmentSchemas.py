@@ -10,6 +10,7 @@ class AppointmentRequestModel(BaseModel):
     SlotId: int
 
     Modality: str
+    MeetingLink: str | None = None
 
     class Config:
         orm_mode = True
@@ -24,6 +25,9 @@ class AppointmentResponseModel(BaseModel):
     PatientId: int
     ServiceId: int
     SlotId: int
+
+    Modality: str 
+    MeetingLink: str | None
 
     class Config:
         orm_mode = True

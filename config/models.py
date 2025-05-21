@@ -62,6 +62,7 @@ class Appointment(Base):
     SlotId = Column(Integer, ForeignKey("Slots.Id"), nullable=False)
 
     Modality = Column(String(255), nullable=False)
+    MeetingLink = Column(String(2000), nullable=True)
      
     patient = relationship("Patient", back_populates="appointments")
     service = relationship("Service", back_populates="appointments")

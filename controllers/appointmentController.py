@@ -6,6 +6,7 @@ from config.models import Appointment, Patient, Slot, Service
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from fastapi import HTTPException
+from utils.jitsi_utils import create_jitsi_meeting
 
 stripe.api_key = "Enter_Your_API_Key"
 
@@ -36,11 +37,15 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
     if serviceCheck is None:
         raise HTTPException(status_code=400, detail="Service not found")
 
-    # Check if the slot is available
+    # Validar modalidad
     if appointment.Modality not in ["Presential", "Virtual"]:
-        raise HTTPException(status_code=400, detail="Modality must be 'Presential' or 'Virtual'")
-    
-    print(f"[BACKEND] Creando cita con modalidad: {appointment.Modality}")
+        raise HTTPException(
+            status_code=400,
+            detail="Modalidad inválida. Debe ser 'Presential' o 'Virtual'"
+        )
+
+    print(f"[BACKEND - CONTROLADOR] Creando cita con modalidad: {appointment.Modality}")
+
 
     newAppointment = Appointment(
         Problem=appointment.Problem,
@@ -48,11 +53,30 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
         PatientId=appointment.PatientId,
         ServiceId=appointment.ServiceId,
         SlotId=appointment.SlotId,
-        Modality=appointment.Modality, 
+        Modality=appointment.Modality,
+        MeetingLink=None  
     )
     db.add(newAppointment)
     await db.commit()
     await db.refresh(newAppointment)
+
+    # Si la modalidad es virtual, generar el enlace de Jitsi Meet
+    if appointment.Modality == "Virtual":
+        try:
+            print(f"[BACKEND - CONTROLADOR] Generando enlace de Jitsi para paciente: {patientCheck.Name}")
+            meeting_info = create_jitsi_meeting(patientCheck.Name, newAppointment.Id)
+            newAppointment.MeetingLink = meeting_info["meeting_url"]
+            await db.commit()
+            await db.refresh(newAppointment)
+            print(f"[BACKEND - CONTROLADOR] Enlace de Jitsi Meet generado: {meeting_info['meeting_url']}")
+        except Exception as e:
+            print(f"[BACKEND - CONTROLADOR]Error al generar enlace de Jitsi Meet: {str(e)}")
+
+    print(f"[BACKEND - CONTROLADOR] Cita creada exitosamente. ID: {newAppointment.Id}, Modalidad: {newAppointment.Modality}")
+    if newAppointment.MeetingLink:
+        print(f"[BACKEND - CONTROLADOR] Link almacenado en BD: {newAppointment.MeetingLink}")
+    else:
+        print("[BACKEND - CONTROLADOR] No se generó link porque no era cita virtual.")
 
     return newAppointment
 
@@ -161,7 +185,7 @@ async def create_payment_link(price_id: str):
             after_completion={
                 "type": "redirect",
                 "redirect": {
-                    "url": "http://localhost:5173/Appointments"  # Change this to your frontend success page
+                    "url": "http://localhost:5173/Appointments"  
                 },
             },
         )
