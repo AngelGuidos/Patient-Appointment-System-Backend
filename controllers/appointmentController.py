@@ -6,13 +6,11 @@ from config.models import Appointment, Patient, Slot, Service
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from fastapi import HTTPException
-from utils.jitsi_utils import create_jitsi_meeting
 
 stripe.api_key = "Enter_Your_API_Key"
 
 
 async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSession):
-    # Exsisting Patient Check
     patientResult = await db.execute(
         select(Patient).filter(Patient.Id == appointment.PatientId)
     )
@@ -21,14 +19,12 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
     if patientCheck is None:
         raise HTTPException(status_code=400, detail="Patient not found")
 
-    # Exsisting Slot Check
     slotResult = await db.execute(select(Slot).filter(Slot.Id == appointment.SlotId))
     slotCheck = slotResult.scalars().first()
 
     if slotCheck is None:
         raise HTTPException(status_code=400, detail="Slot not found")
 
-    # Exsisting Service Check
     serviceResult = await db.execute(
         select(Service).filter(Service.Id == appointment.ServiceId)
     )
@@ -37,15 +33,13 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
     if serviceCheck is None:
         raise HTTPException(status_code=400, detail="Service not found")
 
-    # Validar modalidad
     if appointment.Modality not in ["Presential", "Virtual"]:
         raise HTTPException(
             status_code=400,
             detail="Modalidad inválida. Debe ser 'Presential' o 'Virtual'"
         )
 
-    print(f"[BACKEND - CONTROLADOR] Creando cita con modalidad: {appointment.Modality}")
-
+    print(f"[BACKEND] Creando cita con modalidad: {appointment.Modality}")
 
     newAppointment = Appointment(
         Problem=appointment.Problem,
@@ -54,31 +48,34 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
         ServiceId=appointment.ServiceId,
         SlotId=appointment.SlotId,
         Modality=appointment.Modality,
-        MeetingLink=None  
+        MeetingLink=None
     )
     db.add(newAppointment)
     await db.commit()
     await db.refresh(newAppointment)
 
-    # Si la modalidad es virtual, generar el enlace de Jitsi Meet
     if appointment.Modality == "Virtual":
-        try:
-            print(f"[BACKEND - CONTROLADOR] Generando enlace de Jitsi para paciente: {patientCheck.Name}")
-            meeting_info = create_jitsi_meeting(patientCheck.Name, newAppointment.Id)
-            newAppointment.MeetingLink = meeting_info["meeting_url"]
-            await db.commit()
-            await db.refresh(newAppointment)
-            print(f"[BACKEND - CONTROLADOR] Enlace de Jitsi Meet generado: {meeting_info['meeting_url']}")
-        except Exception as e:
-            print(f"[BACKEND - CONTROLADOR]Error al generar enlace de Jitsi Meet: {str(e)}")
+        room_name = f"telemedicina-{patientCheck.Name.lower().replace(' ', '')}-{newAppointment.Id}"
+        room_name = room_name.replace("ñ", "n")
+        meeting_url = f"https://meet.jit.si/{room_name}"
+        newAppointment.MeetingLink = meeting_url
+        await db.commit()
+        await db.refresh(newAppointment)
+        print(f"[BACKEND] Enlace de Jitsi generado: {meeting_url}")
 
-    print(f"[BACKEND - CONTROLADOR] Cita creada exitosamente. ID: {newAppointment.Id}, Modalidad: {newAppointment.Modality}")
-    if newAppointment.MeetingLink:
-        print(f"[BACKEND - CONTROLADOR] Link almacenado en BD: {newAppointment.MeetingLink}")
-    else:
-        print("[BACKEND - CONTROLADOR] No se generó link porque no era cita virtual.")
-
+    print(f"[BACKEND] Cita creada. ID: {newAppointment.Id}, Link: {newAppointment.MeetingLink}")
     return newAppointment
+
+
+async def generateDoctorJitsiLink(patient_name: str, appointment_id: int):
+    room_name = f"telemedicina-{patient_name.lower().replace(' ', '')}-{appointment_id}"
+    room_name = room_name.replace("ñ", "n")
+    meeting_url = f"https://meet.jit.si/{room_name}"
+
+    return {
+        "meetingId": room_name,
+        "meetingUrl": meeting_url
+    }
 
 
 async def getAllAppointment(db: AsyncSession):
@@ -185,7 +182,7 @@ async def create_payment_link(price_id: str):
             after_completion={
                 "type": "redirect",
                 "redirect": {
-                    "url": "http://localhost:5173/Appointments"  
+                    "url": "http://localhost:5173/Appointments"
                 },
             },
         )

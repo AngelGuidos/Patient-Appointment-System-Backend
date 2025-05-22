@@ -1,8 +1,18 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import SessionLocal
 from schemas.appointmentSchemas import *
-from controllers.appointmentController import *
+from controllers.appointmentController import (
+    createAppointment,
+    getAllAppointmentAccPatient,
+    getAllTodaysAppointment,
+    getAllAppointment,
+    createPrescription,
+    totalPendingAppointment,
+    create_payment_link_for_appointment,
+    generateDoctorJitsiLink,
+)
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -67,3 +77,17 @@ async def totalPendingAppointmentAsync(db: AsyncSession = Depends(getDb)):
 async def createPaymentLinkAsync(payment: PaymentLinkRequestModel):
     paymentLink = await create_payment_link_for_appointment(payment)
     return paymentLink
+
+
+@router.get("/jitsi-token", tags=["appointment"])
+async def get_doctor_jitsi_token(
+    appointmentId: int,
+    patientName: str,
+    db: AsyncSession = Depends(getDb)
+):
+    try:
+        result = await generateDoctorJitsiLink(patientName, appointmentId)
+        return result
+    except Exception as e:
+        print(f"[JITSI ERROR] Error generating token: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate token")
