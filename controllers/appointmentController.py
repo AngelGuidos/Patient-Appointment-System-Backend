@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 import stripe
@@ -6,9 +7,16 @@ from config.models import Appointment, Patient, Slot, Service
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from fastapi import HTTPException
+from dotenv import load_dotenv
+from utils.mail_sender import BuildMail
 
 stripe.api_key = "Enter_Your_API_Key"
 
+load_dotenv()
+
+# Aqui deben de ir las credenciales del correo emisor 
+MAIL_SENDER = os.getenv("EMAIL_SENDER", "")
+MAIL_CREDETENTIALS = os.getenv("EMAIL_APP_PASSWORD", "")
 
 async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSession):
     patientResult = await db.execute(
@@ -62,6 +70,16 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
         await db.commit()
         await db.refresh(newAppointment)
         print(f"[BACKEND] Enlace de Jitsi generado: {meeting_url}")
+        
+        BuildMail (
+                subject=f"Cita de Telemedicina por: {appointment.Problem}",
+                sender=MAIL_SENDER,
+                reciver=patientCheck.Email,
+                credentials=MAIL_CREDETENTIALS,
+                paciente=patientCheck.Name,
+                fecha=appointment.Date,
+                enlace=meeting_url
+            )
 
     print(f"[BACKEND] Cita creada. ID: {newAppointment.Id}, Link: {newAppointment.MeetingLink}")
     return newAppointment
