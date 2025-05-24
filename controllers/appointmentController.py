@@ -77,7 +77,7 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
                 reciver=patientCheck.Email,
                 credentials=MAIL_CREDETENTIALS,
                 paciente=patientCheck.Name,
-                fecha=appointment.Date,
+                fecha=str(appointment.Date),
                 enlace=meeting_url
             )
 
