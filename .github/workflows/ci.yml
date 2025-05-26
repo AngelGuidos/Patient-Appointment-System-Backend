@@ -15,10 +15,10 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test_db
+          MYSQL_DATABASE: PatientAppointmentSystemDb
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: --health-cmd="mysqladmin ping -h localhost" --health-interval=10s --health-timeout=5s --health-retries=5
 
     strategy:
       matrix:
@@ -55,7 +55,9 @@ jobs:
         
     - name: Test with pytest
       env:
-        DATABASE_URL: mysql://root:root@localhost:3306/test_db
+        SYNC_DATABASE_URL: "mysql+pymysql://root:root@localhost"
+        ASYNC_DATABASE_URL: "mysql+aiomysql://root:root@localhost/PatientAppointmentSystemDb"
+        DATABASE_URL: "mysql://root:root@localhost:3306/PatientAppointmentSystemDb"
         SECRET_KEY: "test_secret_key"
         ALGORITHM: "HS256"
         ACCESS_TOKEN_EXPIRE_MINUTES: "30"
