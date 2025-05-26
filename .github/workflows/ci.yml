@@ -53,9 +53,29 @@ jobs:
         # exit-zero treats all errors as warnings
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         
-    - name: Wait for MySQL
+    - name: Wait for MySQL and initialize database
       run: |
         timeout 30s bash -c "until mysql -h127.0.0.1 -P3306 -uroot -proot -e 'SELECT 1;' > /dev/null 2>&1; do sleep 1; done"
+        mysql -h127.0.0.1 -P3306 -uroot -proot -e 'CREATE DATABASE IF NOT EXISTS PatientAppointmentSystemDb;'
+        
+    - name: Initialize database schema
+      env:
+        SYNC_DATABASE_URL: "mysql+pymysql://root:root@127.0.0.1/PatientAppointmentSystemDb"
+        ASYNC_DATABASE_URL: "mysql+aiomysql://root:root@127.0.0.1/PatientAppointmentSystemDb"
+        DATABASE_URL: "mysql://root:root@127.0.0.1:3306/PatientAppointmentSystemDb"
+        SECRET_KEY: "test_secret_key"
+        ALGORITHM: "HS256"
+        ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      run: |
+        python -c "
+        import asyncio
+        from main import app
+        from config.database import async_engine, Base
+        async def init_db():
+            async with async_engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+        asyncio.run(init_db())
+        "
         
     - name: Test with pytest
       env:
