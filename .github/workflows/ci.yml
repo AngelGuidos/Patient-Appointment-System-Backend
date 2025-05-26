@@ -58,7 +58,7 @@ jobs:
         timeout 30s bash -c "until mysql -h127.0.0.1 -P3306 -uroot -proot -e 'SELECT 1;' > /dev/null 2>&1; do sleep 1; done"
         mysql -h127.0.0.1 -P3306 -uroot -proot -e 'CREATE DATABASE IF NOT EXISTS PatientAppointmentSystemDb;'
         
-    - name: Initialize database schema
+    - name: Initialize database schema and test data
       env:
         SYNC_DATABASE_URL: "mysql+pymysql://root:root@127.0.0.1/PatientAppointmentSystemDb"
         ASYNC_DATABASE_URL: "mysql+aiomysql://root:root@127.0.0.1/PatientAppointmentSystemDb"
@@ -67,6 +67,7 @@ jobs:
         ALGORITHM: "HS256"
         ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       run: |
+        # First create tables
         python -c "
         import asyncio
         from main import app
@@ -76,6 +77,9 @@ jobs:
                 await conn.run_sync(Base.metadata.create_all)
         asyncio.run(init_db())
         "
+        
+        # Then load test data
+        mysql -h127.0.0.1 -P3306 -uroot -proot PatientAppointmentSystemDb < utils/initialScriptBdd.sql
         
     - name: Test with pytest
       env:
