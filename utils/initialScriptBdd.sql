@@ -1,5 +1,5 @@
 -- Inserciones para la tabla 'patients'
-INSERT INTO patients (Name, Mobile, Email, Address, Gender, BloodGroup) VALUES
+INSERT INTO Patients (Name, Mobile, Email, Address, Gender, BloodGroup) VALUES
 ('Maria Gonzalez', '5551234567', 'maria.gonzalez@gmail.com', 'Calle 10 #123, Ciudad de Mexico', 'Femenino', 'A+'),
 ('Juan Perez', '5552345678', 'juanperez@hotmail.com', 'Av. Reforma 456, CDMX', 'Masculino', 'O+'),
 ('Laura Martinez', '5553456789', 'lauramartinez@yahoo.com', 'Calle Lago Azul 89, Monterrey', 'Femenino', 'B+'),
@@ -12,7 +12,7 @@ INSERT INTO patients (Name, Mobile, Email, Address, Gender, BloodGroup) VALUES
 ('Miguel Ortega', '5550123456', 'miguel.ortega@correo.com', 'Col. Roma, CDMX', 'Masculino', 'O+');
 
 -- Inserciones para la tabla 'services'
-INSERT INTO services (Name, Description, Price) VALUES
+INSERT INTO Services (Name, Description, Price) VALUES
 ('Consulta General', 'Evaluacion medica general para diagnostico y tratamiento basico.', 25),
 ('Lectura de radiografias', 'Informe medico detallado sobre imagenes de rayos X.', 22.00),
 ('Electroencefalograma (EEG)', 'Estudio de la actividad electrica cerebral mediante electrodos.', 50.00),
@@ -25,7 +25,7 @@ INSERT INTO services (Name, Description, Price) VALUES
 ('Prueba rapida de glucosa', 'Medicion instantanea del nivel de azucar en sangre.', 7.00);
 
 -- Inserciones para la tabla 'slots'
-INSERT INTO slots (Time, Status) VALUES
+INSERT INTO Slots (Time, Status) VALUES
 ('08:00 - 09:00', 'Disponible'),
 ('09:00 - 10:00', 'Ocupado'),
 ('10:00 - 11:00', 'Disponible'),
