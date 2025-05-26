@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from datetime import date
 from main import app
 from schemas.appointmentSchemas import AppointmentRequestModel, PrescriptionRequestModel
+from unittest.mock import patch
 
 client = TestClient(app)
 
@@ -18,12 +19,18 @@ def appointment_data():
     }
 
 def test_create_appointment_endpoint(appointment_data):
-    response = client.post("/appointment", json=appointment_data)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["Problem"] == appointment_data["Problem"]
-    assert data["Modality"] == appointment_data["Modality"]
-    assert "MeetingLink" in data
+    # Mock the BuildMail class
+    with patch('controllers.appointmentController.BuildMail') as mock_mail:
+        response = client.post("/appointment", json=appointment_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["Problem"] == appointment_data["Problem"]
+        assert data["Modality"] == appointment_data["Modality"]
+        assert data["MeetingLink"] is not None
+        assert "telemedicina" in data["MeetingLink"]
+        
+        # Verify email was attempted to be sent
+        mock_mail.assert_called_once()
 
 def test_create_appointment_invalid_data():
     invalid_data = {

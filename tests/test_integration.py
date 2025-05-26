@@ -33,8 +33,11 @@ async def test_patient():
     return response.json()
 
 @pytest.mark.asyncio
-async def test_virtual_appointment_jitsi_integration():
+async def test_virtual_appointment_jitsi_integration(mocker):
     """Prueba la integración completa de una cita virtual con Jitsi"""
+    # Mock the BuildMail class
+    mock_build_mail = mocker.patch('controllers.appointmentController.BuildMail')
+    
     unique_id = str(uuid.uuid4())[:8]
     patient_data = {
         "Name": f"Test Patient Jitsi {unique_id}", 
@@ -70,6 +73,18 @@ async def test_virtual_appointment_jitsi_integration():
     expected_meeting_id = generate_meeting_id(patient["Name"], appointment["Id"])
     expected_url = f"https://meet.jit.si/{expected_meeting_id}"
     assert appointment["MeetingLink"] == expected_url
+    
+    # Verify email was attempted to be sent
+    mock_build_mail.assert_called_once()
+    mock_build_mail.assert_called_with(
+        subject=f"Cita de Telemedicina por: {appointment_data['Problem']}",
+        sender=mocker.ANY,
+        reciver=patient["Email"],
+        credentials=mocker.ANY,
+        paciente=patient["Name"],
+        fecha=str(date.today()),
+        enlace=appointment["MeetingLink"]
+    )
 
 @pytest.mark.asyncio
 async def test_virtual_appointment_email_notification(mocker):
