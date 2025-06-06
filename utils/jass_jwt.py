@@ -16,14 +16,14 @@ class JaaSJwtBuilder:
     def withDefaults(self):
         return self.withExpTime(int(time.time() + JaaSJwtBuilder.EXP_TIME_DELAY_SEC)) \
             .withNbfTime(int(time.time() - JaaSJwtBuilder.NBF_TIME_DELAY_SEC)) \
-                .withLiveStreamingEnabled(True) \
-                    .withRecordingEnabled(True) \
-                        .withOutboundCallEnabled(True) \
-                            .withSipOutboundCallEnabled(True) \
-                                .withTranscriptionEnabled(True) \
-                                    .withModerator(True) \
-                                        .withRoomName("*") \
-                                            .withUserId(str(uuid.uuid4()))
+            .withLiveStreamingEnabled(True) \
+            .withRecordingEnabled(True) \
+            .withOutboundCallEnabled(True) \
+            .withSipOutboundCallEnabled(True) \
+            .withTranscriptionEnabled(True) \
+            .withModerator(True) \
+            .withRoomName("*") \
+            .withUserId(str(uuid.uuid4()))
 
     def withApiKey(self, apiKey):
         self.header['kid'] = apiKey
@@ -71,7 +71,7 @@ class JaaSJwtBuilder:
         return self
 
     def withNbfTime(self, nbfTime):
-        self.payloadClaims['nbfTime'] = nbfTime
+        self.payloadClaims['nbf'] = nbfTime
         return self
 
     def withRoomName(self, roomName):
@@ -98,3 +98,7 @@ class JaaSJwtBuilder:
         self.payloadClaims['aud'] = 'jitsi'
         print(f"[JITSI DEBUG] AUD")
         return jwt.encode(self.header, self.payloadClaims, key)
+    
+    def withLobbyEnabled(self, isEnabled):
+        self.featureClaims['lobby'] = 'true' if isEnabled == True else 'false'
+        return self

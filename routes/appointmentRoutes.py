@@ -10,7 +10,7 @@ from controllers.appointmentController import (
     createPrescription,
     totalPendingAppointment,
     create_payment_link_for_appointment,
-    generateDoctorJitsiLink,
+    get_doctor_jitsi_info,
 )
 from fastapi.responses import JSONResponse
 
@@ -79,15 +79,8 @@ async def createPaymentLinkAsync(payment: PaymentLinkRequestModel):
     return paymentLink
 
 
-@router.get("/jitsi-token", tags=["appointment"])
-async def get_doctor_jitsi_token(
-    appointmentId: int,
-    patientName: str,
-    db: AsyncSession = Depends(getDb)
+@router.get("/appointment/{appointment_id}/jitsi/doctor", tags=["appointment"])
+async def get_jitsi_for_doctor(
+    appointment_id: int, db: AsyncSession = Depends(getDb)
 ):
-    try:
-        result = await generateDoctorJitsiLink(patientName, appointmentId)
-        return result
-    except Exception as e:
-        print(f"[JITSI ERROR] Error generating token: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to generate token")
+    return await get_doctor_jitsi_info(appointment_id, db)
