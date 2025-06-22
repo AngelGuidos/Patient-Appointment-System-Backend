@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 
 stripe.api_key = "Enter_Your_API_Key"
 
+from utils.jitsi_utils import get_jitsi_meeting_link_and_token, generate_jitsi_jwt
+
 load_dotenv()
 
 # Aqui deben de ir las credenciales del correo emisor 
@@ -68,12 +70,24 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
     if appointment.Modality == "Virtual":
         room_name = f"telemedicina-{patientCheck.Name.lower().replace(' ', '')}-{newAppointment.Id}"
         room_name = room_name.replace("ñ", "n")
-        meeting_url = f"https://meet.jit.si/{room_name}"
+        meeting_url = f"https://8x8.vc/{os.getenv('JITSI_APP_ID')}/{room_name}"
+
+        patient_token = generate_jitsi_jwt(
+            user_name=patientCheck.Name,
+            user_id=patientCheck.Id,
+            room_name=room_name,
+            is_moderator=False
+        )
+
+        print(f"[BACKEND] Jwt de para el paciente generado: {patient_token}")
+        
+        patient_meeting_link = f"{meeting_url}?jwt={patient_token}"
+
         newAppointment.MeetingLink = meeting_url
         await db.commit()
         await db.refresh(newAppointment)
-        print(f"[BACKEND] Enlace de Jitsi generado: {meeting_url}")
-        
+        print(f"[BACKEND] Enlace de Jitsi JaaS generado: {meeting_url}")
+    
         BuildMail (
                 subject=f"Cita de Telemedicina por: {appointment.Problem}",
                 sender=MAIL_SENDER,
@@ -81,7 +95,7 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
                 credentials=MAIL_CREDETENTIALS,
                 paciente=patientCheck.Name,
                 fecha=str(appointment.Date),
-                enlace=meeting_url,
+                enlace=patient_meeting_link,
                 tipo="confirmacion",
                 hora=beginTime
             )
@@ -89,16 +103,25 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
     print(f"[BACKEND] Cita creada. ID: {newAppointment.Id}, Link: {newAppointment.MeetingLink}")
     return newAppointment
 
+async def get_doctor_jitsi_info(appointment_id: int, db: AsyncSession):
+    appointment = await db.get(Appointment, appointment_id)
+    if not appointment or appointment.Modality != "Virtual":
+        raise HTTPException(status_code=404, detail="Appointment not found or not virtual")
 
-async def generateDoctorJitsiLink(patient_name: str, appointment_id: int):
-    room_name = f"telemedicina-{patient_name.lower().replace(' ', '')}-{appointment_id}"
-    room_name = room_name.replace("ñ", "n")
-    meeting_url = f"https://meet.jit.si/{room_name}"
+    patient = await db.get(Patient, appointment.PatientId)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
 
-    return {
-        "meetingId": room_name,
-        "meetingUrl": meeting_url
-    }
+    doctor_name = "Dr"
+    doctor_id = 1
+    result = get_jitsi_meeting_link_and_token(
+        user_name=doctor_name,
+        user_id=doctor_id,
+        appointment_id=appointment.Id,
+        patient_name=patient.Name,
+        is_moderator=True
+    )
+    return result
 
 
 async def getAllAppointment(db: AsyncSession):
