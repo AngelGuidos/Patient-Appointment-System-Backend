@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from config.database import Base
 
@@ -63,6 +63,8 @@ class Appointment(Base):
 
     Modality = Column(String(255), nullable=False)
     MeetingLink = Column(String(2000), nullable=True)
+
+    ReminderSent = Column(Boolean, default=False)
      
     patient = relationship("Patient", back_populates="appointments")
     service = relationship("Service", back_populates="appointments")
