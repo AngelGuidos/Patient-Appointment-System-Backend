@@ -27,6 +27,7 @@ class AppointmentResponseModel(BaseModel):
     SlotId: int
     Modality: str 
     MeetingLink: Optional[str]
+    ReminderSent: Optional[bool]
 
     class Config:
         orm_mode = True

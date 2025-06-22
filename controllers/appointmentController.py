@@ -9,6 +9,7 @@ from sqlalchemy.orm import joinedload
 from fastapi import HTTPException
 from dotenv import load_dotenv
 from utils.mail_sender import BuildMail
+from datetime import datetime, timedelta
 
 stripe.api_key = "Enter_Your_API_Key"
 
@@ -31,6 +32,8 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
 
     slotResult = await db.execute(select(Slot).filter(Slot.Id == appointment.SlotId))
     slotCheck = slotResult.scalars().first()
+
+    beginTime = str(slotCheck.Time).split(" - ")[0]
 
     if slotCheck is None:
         raise HTTPException(status_code=400, detail="Slot not found")
@@ -58,7 +61,7 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
         ServiceId=appointment.ServiceId,
         SlotId=appointment.SlotId,
         Modality=appointment.Modality,
-        MeetingLink=None
+        MeetingLink=None,
     )
     db.add(newAppointment)
     await db.commit()
@@ -86,14 +89,16 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
         print(f"[BACKEND] Enlace de Jitsi JaaS generado: {meeting_url}")
     
         BuildMail (
-            subject=f"Cita de Telemedicina por: {appointment.Problem}",
-            sender=MAIL_SENDER,
-            reciver=patientCheck.Email,
-            credentials=MAIL_CREDETENTIALS,
-            paciente=patientCheck.Name,
-            fecha=str(appointment.Date),
-            enlace=patient_meeting_link,
-        )
+                subject=f"Cita de Telemedicina por: {appointment.Problem}",
+                sender=MAIL_SENDER,
+                reciver=patientCheck.Email,
+                credentials=MAIL_CREDETENTIALS,
+                paciente=patientCheck.Name,
+                fecha=str(appointment.Date),
+                enlace=patient_meeting_link,
+                tipo="confirmacion",
+                hora=beginTime
+            )
 
     print(f"[BACKEND] Cita creada. ID: {newAppointment.Id}, Link: {newAppointment.MeetingLink}")
     return newAppointment
