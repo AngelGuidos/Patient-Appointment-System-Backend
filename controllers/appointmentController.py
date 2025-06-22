@@ -12,7 +12,7 @@ from utils.mail_sender import BuildMail
 
 stripe.api_key = "Enter_Your_API_Key"
 
-from utils.jitsi_utils import get_jitsi_meeting_link_and_token
+from utils.jitsi_utils import get_jitsi_meeting_link_and_token, generate_jitsi_jwt
 
 load_dotenv()
 
@@ -68,6 +68,18 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
         room_name = f"telemedicina-{patientCheck.Name.lower().replace(' ', '')}-{newAppointment.Id}"
         room_name = room_name.replace("ñ", "n")
         meeting_url = f"https://8x8.vc/{os.getenv('JITSI_APP_ID')}/{room_name}"
+
+        patient_token = generate_jitsi_jwt(
+            user_name=patientCheck.Name,
+            user_id=patientCheck.Id,
+            room_name=room_name,
+            is_moderator=False
+        )
+
+        print(f"[BACKEND] Jwt de para el paciente generado: {patient_token}")
+        
+        patient_meeting_link = f"{meeting_url}?jwt={patient_token}"
+
         newAppointment.MeetingLink = meeting_url
         await db.commit()
         await db.refresh(newAppointment)
@@ -80,7 +92,7 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
             credentials=MAIL_CREDETENTIALS,
             paciente=patientCheck.Name,
             fecha=str(appointment.Date),
-            enlace=meeting_url
+            enlace=patient_meeting_link,
         )
 
     print(f"[BACKEND] Cita creada. ID: {newAppointment.Id}, Link: {newAppointment.MeetingLink}")
