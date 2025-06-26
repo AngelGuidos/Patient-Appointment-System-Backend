@@ -22,49 +22,50 @@ class BuildMail:
         self.msg['From'] = sender # Incicalizador de valor From
         self.msg['To'] = reciver # Incicalizador de valor To
 
-        # Setear el cuerpo del correo 
-        self.msg.set_content(self._build_body(
-            paciente, fecha, enlace, tipo, hora
-        ))
+        # Cuerpo en HTML
+        body_html = self._build_body(paciente, fecha, enlace, tipo, hora)
 
-        # Envio del correo
+        self.msg.set_content("Este correo requiere un visor compatible con HTML.")  # fallback plano
+        self.msg.add_alternative(body_html, subtype='html')
+
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
             smtp.login(sender, credentials)
             smtp.sendmail(sender, reciver, self.msg.as_string())
 
-    # Construye el mensaje en base a la templeate de abajo
     def _build_body(self, paciente, fecha, enlace, tipo, hora):
         if tipo == "confirmacion":
             return f"""\
-        
-Estimado(a) {paciente}:
-
-Le confirmamos su cita de telemedicina programada para:
-
-📅 Fecha: {fecha} 
-🕒 Hora: {hora} 
-
-Le recomendamos conectarse 10 minutos antes del inicio, desde un lugar tranquilo y con buena conexión a internet.  
-Si tiene exámenes recientes o documentos relevantes, tenga a mano sus archivos para compartirlos durante la consulta.
-
-Saludos cordiales.
+<html>
+  <body>
+    <p>Estimado(a) {paciente},</p>
+    <p>Le confirmamos su cita de telemedicina programada para:</p>
+    <ul>
+      <li>📅 Fecha: <strong>{fecha}</strong></li>
+      <li>🕒 Hora: <strong>{hora}</strong></li>
+    </ul>
+    <p>Le recomendamos conectarse 10 minutos antes del inicio desde un lugar tranquilo y con buena conexión a internet.</p>
+    <p>Si tiene exámenes recientes o documentos relevantes, tenga a mano sus archivos para compartirlos durante la consulta.</p>
+    <p>Saludos cordiales.</p>
+  </body>
+</html>
 """
         elif tipo == "recordatorio":
             return f"""\
-Estimado(a) {paciente}:
-
-Este es un recordatorio de su cita de médica virtual que tendrá lugar pronto:
-
-📅 Fecha: {fecha}  
-🕒 Hora: {hora}
-
-{"🔗 Enlace para la reunión: " + enlace}
-
-Por favor, prepárese para la consulta y conectese a tiempo.
-
-Saludos cordiales.
+<html>
+  <body>
+    <p>Estimado(a) {paciente},</p>
+    <p>Este es un recordatorio de su cita médica virtual que tendrá lugar pronto:</p>
+    <ul>
+      <li>📅 Fecha: <strong>{fecha}</strong></li>
+      <li>🕒 Hora: <strong>{hora}</strong></li>
+    </ul>
+    <p>🔗 <a href="{enlace}">Haz clic aquí para unirte a la consulta</a></p>
+    <p>Por favor, prepárese para la consulta y conéctese a tiempo.</p>
+    <p>Saludos cordiales.</p>
+  </body>
+</html>
 """
         else:
-            return "Hola, este es un correo automático."
+            return "<p>Hola, este es un correo automático.</p>"
 
