@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from dotenv import load_dotenv
 from utils.mail_sender import BuildMail
 from datetime import datetime, timedelta
+from utils.timestamps_generators import timestamps_gen
 
 stripe.api_key = "Enter_Your_API_Key"
 
@@ -34,6 +35,7 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
     slotCheck = slotResult.scalars().first()
 
     beginTime = str(slotCheck.Time).split(" - ")[0]
+    endTime = str(slotCheck.Time).split(" - ")[1]
 
     if slotCheck is None:
         raise HTTPException(status_code=400, detail="Slot not found")
@@ -68,6 +70,7 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
     await db.refresh(newAppointment)
 
     if appointment.Modality == "Virtual":
+        nbf_timestamp, exp_timestamp = timestamps_gen(beginTime, endTime, appointment.Date)
         room_name = f"telemedicina-{patientCheck.Name.lower().replace(' ', '')}-{newAppointment.Id}"
         room_name = room_name.replace("ñ", "n")
         meeting_url = f"https://8x8.vc/{os.getenv('JITSI_APP_ID')}/{room_name}"
@@ -76,14 +79,16 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
             user_name=patientCheck.Name,
             user_id=patientCheck.Id,
             room_name=room_name,
-            is_moderator=False
+            is_moderator=False,
+            nbf_time=nbf_timestamp,
+            exp_time=exp_timestamp
         )
 
         print(f"[BACKEND] Jwt de para el paciente generado: {patient_token}")
         
         patient_meeting_link = f"{meeting_url}?jwt={patient_token}"
 
-        newAppointment.MeetingLink = meeting_url
+        newAppointment.MeetingLink = patient_meeting_link
         await db.commit()
         await db.refresh(newAppointment)
         print(f"[BACKEND] Enlace de Jitsi JaaS generado: {meeting_url}")
@@ -97,7 +102,7 @@ async def createAppointment(appointment: AppointmentRequestModel, db: AsyncSessi
                 fecha=str(appointment.Date),
                 enlace=patient_meeting_link,
                 tipo="confirmacion",
-                hora=beginTime
+                hora=beginTime,
             )
 
     print(f"[BACKEND] Cita creada. ID: {newAppointment.Id}, Link: {newAppointment.MeetingLink}")
@@ -111,6 +116,14 @@ async def get_doctor_jitsi_info(appointment_id: int, db: AsyncSession):
     patient = await db.get(Patient, appointment.PatientId)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
+    
+    slotResult = await db.execute(select(Slot).filter(Slot.Id == appointment.SlotId))
+    slotCheck = slotResult.scalars().first()
+
+    beginTime = str(slotCheck.Time).split(" - ")[0]
+    endTime = str(slotCheck.Time).split(" - ")[1]
+
+    nbf_timestamp, exp_timestamp = timestamps_gen(beginTime, endTime, appointment.Date)
 
     doctor_name = "Dr"
     doctor_id = 1
@@ -119,8 +132,11 @@ async def get_doctor_jitsi_info(appointment_id: int, db: AsyncSession):
         user_id=doctor_id,
         appointment_id=appointment.Id,
         patient_name=patient.Name,
-        is_moderator=True
+        is_moderator=True,
+        nbf_time=nbf_timestamp,
+        exp_time=exp_timestamp
     )
+    print(f"[BACKEND] Respuesta de get_doctor: {result}")
     return result
 
 
