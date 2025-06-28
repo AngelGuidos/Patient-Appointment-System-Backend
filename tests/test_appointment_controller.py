@@ -48,7 +48,7 @@ def mock_service():
 def mock_slot():
     return Slot(
         Id=1,
-        Time="09:00",
+        Time="09:00 - 10:00",
         Status="Available"
     )
 
@@ -91,8 +91,15 @@ async def test_create_appointment_presential(mock_db, sample_appointment_data, m
     assert result.MeetingLink is None
 
 @pytest.mark.asyncio
-async def test_create_appointment_invalid_modality(mock_db, sample_appointment_data):
+async def test_create_appointment_invalid_modality(mock_db, sample_appointment_data, mock_patient, mock_service, mock_slot):
     sample_appointment_data.Modality = "InvalidModality"
+    
+    # Configurar los mocks para que llegue hasta la validación de modalidad
+    mock_db.execute.return_value.scalars.return_value.first.side_effect = [
+        mock_patient,
+        mock_slot,
+        mock_service
+    ]
     
     with pytest.raises(HTTPException) as exc_info:
         await createAppointment(sample_appointment_data, mock_db)

@@ -77,10 +77,9 @@ def test_get_total_pending_appointments():
 
 def test_get_jitsi_token():
     appointment_id = 1
-    patient_name = "John Doe"
-    response = client.get(f"/jitsi-token?appointmentId={appointment_id}&patientName={patient_name}")
+    response = client.get(f"/appointment/{appointment_id}/jitsi/doctor")
     assert response.status_code == 200
     data = response.json()
-    assert "meetingId" in data
-    assert "meetingUrl" in data
-    assert f"telemedicina-johndoe-{appointment_id}" in data["meetingId"] 
+    assert "meeting_id" in data
+    assert "meeting_url" in data
+    assert "token" in data 
