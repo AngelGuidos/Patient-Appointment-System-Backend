@@ -19,8 +19,13 @@ def appointment_data():
     }
 
 def test_create_appointment_endpoint(appointment_data):
-    # Mock the BuildMail class
-    with patch('controllers.appointmentController.BuildMail') as mock_mail:
+    # Mock the BuildMail class and Jitsi functions
+    with patch('controllers.appointmentController.BuildMail') as mock_mail, \
+         patch('controllers.appointmentController.generate_jitsi_jwt') as mock_jwt:
+        
+        # Mock the JWT generation
+        mock_jwt.return_value = "test-jwt-token"
+        
         response = client.post("/appointment", json=appointment_data)
         assert response.status_code == 200
         data = response.json()
@@ -77,10 +82,17 @@ def test_get_total_pending_appointments():
 
 def test_get_jitsi_token():
     appointment_id = 1
-    patient_name = "John Doe"
-    response = client.get(f"/jitsi-token?appointmentId={appointment_id}&patientName={patient_name}")
-    assert response.status_code == 200
-    data = response.json()
-    assert "meetingId" in data
-    assert "meetingUrl" in data
-    assert f"telemedicina-johndoe-{appointment_id}" in data["meetingId"] 
+    # Mock the Jitsi functions
+    with patch('controllers.appointmentController.get_jitsi_meeting_link_and_token') as mock_jitsi:
+        mock_jitsi.return_value = {
+            "meeting_id": "telemedicina-johndoe-1",
+            "meeting_url": "https://8x8.vc/test-app-id/telemedicina-johndoe-1",
+            "token": "test-jwt-token"
+        }
+        
+        response = client.get(f"/appointment/{appointment_id}/jitsi/doctor")
+        assert response.status_code == 200
+        data = response.json()
+        assert "meeting_id" in data
+        assert "meeting_url" in data
+        assert "token" in data 

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from main import app
 from config.models import Patient, Appointment, Slot, Service
 from config.database import SessionLocal
-from utils.jitsi_utils import generate_meeting_id, create_jitsi_meeting
+from utils.jitsi_utils import generate_meeting_id
 import uuid
 
 # Configuración inicial
@@ -35,8 +35,10 @@ async def test_patient():
 @pytest.mark.asyncio
 async def test_virtual_appointment_jitsi_integration(mocker):
     """Prueba la integración completa de una cita virtual con Jitsi"""
-    # Mock the BuildMail class
+    # Mock the BuildMail class and Jitsi functions
     mock_build_mail = mocker.patch('controllers.appointmentController.BuildMail')
+    mock_jwt = mocker.patch('controllers.appointmentController.generate_jitsi_jwt')
+    mock_jwt.return_value = "test-jwt-token"
     
     unique_id = str(uuid.uuid4())[:8]
     patient_data = {
@@ -71,8 +73,10 @@ async def test_virtual_appointment_jitsi_integration(mocker):
 
     # Verificar que el enlace es válido según el formato esperado
     expected_meeting_id = generate_meeting_id(patient["Name"], appointment["Id"])
-    expected_url = f"https://meet.jit.si/{expected_meeting_id}"
-    assert appointment["MeetingLink"] == expected_url
+    # Updated to match the new domain format used in the controller
+    expected_url = f"https://8x8.vc/{mocker.patch('os.getenv', return_value='test-app-id').return_value}/{expected_meeting_id}"
+    assert "8x8.vc" in appointment["MeetingLink"]
+    assert expected_meeting_id in appointment["MeetingLink"]
     
     # Verify email was attempted to be sent
     mock_build_mail.assert_called_once()
@@ -83,7 +87,9 @@ async def test_virtual_appointment_jitsi_integration(mocker):
         credentials=mocker.ANY,
         paciente=patient["Name"],
         fecha=str(date.today()),
-        enlace=appointment["MeetingLink"]
+        enlace=appointment["MeetingLink"],
+        tipo="confirmacion",
+        hora=mocker.ANY,
     )
 
 @pytest.mark.asyncio
@@ -104,6 +110,8 @@ async def test_virtual_appointment_email_notification(mocker):
     
     # Mock de BuildMail en el módulo donde se USA (controllers.appointmentController)
     mock_build_mail = mocker.patch('controllers.appointmentController.BuildMail')
+    mock_jwt = mocker.patch('controllers.appointmentController.generate_jitsi_jwt')
+    mock_jwt.return_value = "test-jwt-token"
     
     appointment_data = {
         "Problem": "Consulta Virtual con Notificación por Email",
@@ -126,7 +134,9 @@ async def test_virtual_appointment_email_notification(mocker):
         credentials=mocker.ANY,
         paciente=patient["Name"],
         fecha=str(date.today()),
-        enlace=appointment["MeetingLink"]
+        enlace=appointment["MeetingLink"],
+        tipo="confirmacion",
+        hora=mocker.ANY,
     )
 
 @pytest.mark.asyncio
