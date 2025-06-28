@@ -35,8 +35,10 @@ async def test_patient():
 @pytest.mark.asyncio
 async def test_virtual_appointment_jitsi_integration(mocker):
     """Prueba la integración completa de una cita virtual con Jitsi"""
-    # Mock the BuildMail class
+    # Mock the BuildMail class and Jitsi functions
     mock_build_mail = mocker.patch('controllers.appointmentController.BuildMail')
+    mock_jwt = mocker.patch('controllers.appointmentController.generate_jitsi_jwt')
+    mock_jwt.return_value = "test-jwt-token"
     
     unique_id = str(uuid.uuid4())[:8]
     patient_data = {
@@ -108,6 +110,8 @@ async def test_virtual_appointment_email_notification(mocker):
     
     # Mock de BuildMail en el módulo donde se USA (controllers.appointmentController)
     mock_build_mail = mocker.patch('controllers.appointmentController.BuildMail')
+    mock_jwt = mocker.patch('controllers.appointmentController.generate_jitsi_jwt')
+    mock_jwt.return_value = "test-jwt-token"
     
     appointment_data = {
         "Problem": "Consulta Virtual con Notificación por Email",

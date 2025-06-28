@@ -61,8 +61,13 @@ async def test_create_appointment_virtual(mock_db, sample_appointment_data, mock
         mock_service
     ]
 
-    # Mock del envío de correo
-    with patch('controllers.appointmentController.BuildMail') as mock_mail:
+    # Mock del envío de correo y Jitsi functions
+    with patch('controllers.appointmentController.BuildMail') as mock_mail, \
+         patch('controllers.appointmentController.generate_jitsi_jwt') as mock_jwt:
+        
+        # Mock the JWT generation
+        mock_jwt.return_value = "test-jwt-token"
+        
         result = await createAppointment(sample_appointment_data, mock_db)
         
         # Verificaciones
