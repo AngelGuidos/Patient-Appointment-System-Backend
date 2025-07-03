@@ -3,9 +3,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, text
+import os
+from dotenv import load_dotenv
 
-SYNC_DATABASE_URL = "mysql+pymysql://root:@localhost"
-ASYNC_DATABASE_URL = "mysql+aiomysql://root:@localhost/PatientAppointmentSystemDb"
+load_dotenv()
+
+# Get database URLs from environment variables or use defaults
+SYNC_DATABASE_URL = os.getenv("SYNC_DATABASE_URL", "mysql+pymysql://root:@localhost")
+ASYNC_DATABASE_URL = os.getenv("ASYNC_DATABASE_URL", "mysql+aiomysql://root:@localhost/PatientAppointmentSystemDb")
 
 sync_engine = create_engine(SYNC_DATABASE_URL, echo=True)
 try:

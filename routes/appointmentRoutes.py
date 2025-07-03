@@ -1,8 +1,18 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import SessionLocal
 from schemas.appointmentSchemas import *
-from controllers.appointmentController import *
+from controllers.appointmentController import (
+    createAppointment,
+    getAllAppointmentAccPatient,
+    getAllTodaysAppointment,
+    getAllAppointment,
+    createPrescription,
+    totalPendingAppointment,
+    create_payment_link_for_appointment,
+    get_doctor_jitsi_info,
+)
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -67,3 +77,10 @@ async def totalPendingAppointmentAsync(db: AsyncSession = Depends(getDb)):
 async def createPaymentLinkAsync(payment: PaymentLinkRequestModel):
     paymentLink = await create_payment_link_for_appointment(payment)
     return paymentLink
+
+
+@router.get("/appointment/{appointment_id}/jitsi/doctor", tags=["appointment"])
+async def get_jitsi_for_doctor(
+    appointment_id: int, db: AsyncSession = Depends(getDb)
+):
+    return await get_doctor_jitsi_info(appointment_id, db)

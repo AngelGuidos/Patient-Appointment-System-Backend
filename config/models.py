@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from config.database import Base
-
 
 class Admin(Base):
     __tablename__ = "Admin"
@@ -62,6 +61,11 @@ class Appointment(Base):
     ServiceId = Column(Integer, ForeignKey("Services.Id"), nullable=False)
     SlotId = Column(Integer, ForeignKey("Slots.Id"), nullable=False)
 
+    Modality = Column(String(255), nullable=False)
+    MeetingLink = Column(String(2000), nullable=True)
+
+    ReminderSent = Column(Boolean, default=False)
+     
     patient = relationship("Patient", back_populates="appointments")
     service = relationship("Service", back_populates="appointments")
     slot = relationship("Slot", back_populates="appointments")

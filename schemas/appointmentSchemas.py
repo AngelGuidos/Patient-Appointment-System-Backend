@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import date
+from typing import Optional
 
 
 class AppointmentRequestModel(BaseModel):
@@ -8,6 +9,8 @@ class AppointmentRequestModel(BaseModel):
     PatientId: int
     ServiceId: int
     SlotId: int
+    Modality: str
+    MeetingLink: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -17,11 +20,14 @@ class AppointmentResponseModel(BaseModel):
     Id: int
     Problem: str
     Date: date
-    Prescription: str | None
-    Status: str | None
+    Prescription: Optional[str]
+    Status: Optional[str]
     PatientId: int
     ServiceId: int
     SlotId: int
+    Modality: str 
+    MeetingLink: Optional[str]
+    ReminderSent: Optional[bool]
 
     class Config:
         orm_mode = True
@@ -29,7 +35,7 @@ class AppointmentResponseModel(BaseModel):
 
 class PrescriptionRequestModel(BaseModel):
     Prescription: str
-    Status: str | None = None
+    Status: Optional[str] = None
 
     class Config:
         orm_mode = True

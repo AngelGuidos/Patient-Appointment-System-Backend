@@ -1,5 +1,8 @@
 # Patient Appointment System
 
+## Test
+- 🧪 [Test Results](./tests/tests_documentation.md)
+
 ## Overview
 
 The Patient Appointment System is a comprehensive web application designed to facilitate the scheduling and management of appointments between patients and healthcare service providers. This system offers a user-friendly interface for patients to book appointments, access their medical history, receive prescriptions, and manage their healthcare needs efficiently. Healthcare providers can seamlessly manage appointments, services, and patient records, enhancing overall productivity and patient care.
