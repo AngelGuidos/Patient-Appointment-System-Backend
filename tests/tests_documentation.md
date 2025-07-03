@@ -108,3 +108,21 @@ Las pruebas cubren tanto la lógica interna de los controladores y utilidades (u
 ## Resultados de la última ejecución de pruebas
 
 A continuación se muestran los resultados de la última ejecución de pruebas, donde se evidencia que todas las pruebas fueron exitosas: 
+- tests/test_appointment_controller.py::test_create_appointment_virtual PASSED
+- tests/test_appointment_controller.py::test_create_appointment_presential PASSED
+- tests/test_appointment_controller.py::test_create_appointment_invalid_modality PASSED
+- tests/test_appointment_controller.py::test_get_all_appointments_pending PASSED
+- tests/test_appointment_routes.py::test_create_appointment_endpoint PASSED
+- tests/test_appointment_routes.py::test_create_appointment_invalid_data PASSED
+- tests/test_appointment_routes.py::test_get_patient_appointments PASSED
+- tests/test_appointment_routes.py::test_get_todays_appointments PASSED
+- tests/test_appointment_routes.py::test_get_all_appointments PASSED
+- tests/test_appointment_routes.py::test_create_prescription PASSED
+- tests/test_appointment_routes.py::test_get_total_pending_appointments PASSED
+- tests/test_appointment_routes.py::test_get_jitsi_token PASSED
+- tests/test_integration.py::test_virtual_appointment_jitsi_integration PASSED
+- tests/test_integration.py::test_virtual_appointment_email_notification PASSED
+- tests/test_integration.py::test_invalid_virtual_appointment_creation PASSED
+- tests/test_jitsi.py::test_generate_meeting_id PASSED
+- tests/test_jitsi.py::test_generate_jitsi_jwt PASSED
+- tests/test_jitsi.py::test_get_jitsi_meeting_link_and_token PASSED
