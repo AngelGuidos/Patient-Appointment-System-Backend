@@ -101,4 +101,10 @@ Este documento describe las pruebas realizadas en el sistema, detallando qué se
 
 ## Conclusión
 
-Las pruebas cubren tanto la lógica interna de los controladores y utilidades (unitarias) como la integración de los endpoints y el flujo completo de negocio (integración). Se utilizan datos simulados y reales, y se validan tanto los casos exitosos como los de error. Todas las pruebas han pasado correctamente, evidenciando el correcto funcionamiento de los módulos principales del sistema de citas para pacientes. 
+Las pruebas cubren tanto la lógica interna de los controladores y utilidades (unitarias) como la integración de los endpoints y el flujo completo de negocio (integración). Se utilizan datos simulados y reales, y se validan tanto los casos exitosos como los de error. Todas las pruebas han pasado correctamente, evidenciando el correcto funcionamiento de los módulos principales del sistema de citas para pacientes.
+
+---
+
+## Resultados de la última ejecución de pruebas
+
+A continuación se muestran los resultados de la última ejecución de pruebas, donde se evidencia que todas las pruebas fueron exitosas: 
